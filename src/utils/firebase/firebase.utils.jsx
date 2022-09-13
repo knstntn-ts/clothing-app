@@ -2,7 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, signInWithRedirect, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth"
-import { collection, writeBatch } from "firebase/firestore";
+import { collection, writeBatch, query, getDocs } from "firebase/firestore";
 const firebaseConfig = {
     apiKey: "AIzaSyAPs9DTt1rav2HBCWVrakAw03jrkn7Fc1U",
     authDomain: "clothing-db-82d9f.firebaseapp.com",
@@ -41,6 +41,22 @@ export const addCollectionAndDocuments = async (collectionKey, objectsToAdd) => 
     await batch.commit();
     console.log("done")
 
+}
+
+export const getCategoriesAndDocuments = async () => {
+    const collectionRef = collection(db, "categories");
+
+    const q = query(collectionRef);
+
+    const querySnapshot = await getDocs(q);
+    const categoryMap = querySnapshot.docs.reduce((acc, docSnapShopt) => {
+        const {title, items} = docSnapShopt.data();
+        acc[title.toLowerCase()] = items;
+        return acc
+    }, {})
+
+    return categoryMap;
+    
 }
 
 

@@ -1,6 +1,6 @@
 
-
-import { createContext, useState, useEffect } from "react";
+import { createAction } from "../utils/reducer/reducer.utils";
+import { createContext, useState, useEffect, useReducer } from "react";
 
 const addCartItem = (cartItems, productToAdd) => {
     // find if items contain productToAdd
@@ -68,6 +68,7 @@ const deleteItem = (cartItems, producToDelete) => {
 }
 
 
+
 // as the actual value you want to access
 export const CartDropdownContext = createContext({
     cartDropDownState: null,
@@ -80,39 +81,97 @@ export const CartDropdownContext = createContext({
     total: 0
 });
 
-/*
 
 
-*/
+/////////// Implementation with Reducers
+
+const USER_ACTION_TYPES = {
+    SET_CART_ITEMS: "SET_CART_ITEMS",
+    SET_CART_OPEN: "SET_CART_OPEN"   
+}
+
+const cartReducer = (state, action) => {
+    const {type, payload} = action;
+
+
+    switch(type) {
+        case USER_ACTION_TYPES.SET_CART_ITEMS:
+            return {
+                ...state,
+                ...payload
+            }
+        case USER_ACTION_TYPES.SET_CART_OPEN:
+            return {
+                ...state,
+                cartDropDownState: payload
+            }
+        default:
+            throw new Error(`Unhandled type ${type} in userReducer`)
+
+    }
+}
+
+const INITIAL_STATE = {
+    cartItems: [],
+    cartDropDownState: false,
+    cartCount: 0,
+    total: 0
+}
+///////////////////
 
 export const CartDropdownProvider = ({ children }) => {
-    const [cartDropDownState, setcartDropDownState] = useState(false);
-    const [cartItems, setCartItems] = useState([])
-    const [cartCount, setCartCount] = useState(0)
-    const [total, setTotal] = useState(0)
-
-    useEffect(() => {
-        const newCartCount = cartItems.reduce(((acc, el) => acc + el.quantity), 0)
-        setCartCount(newCartCount)
-    }, [cartItems])
+    // const [cartDropDownState, setcartDropDownState] = useState(false);
+    // const [cartItems, setCartItems] = useState([])
+    // const [cartCount, setCartCount] = useState(0)
+    // const [total, setTotal] = useState(0)
 
 
-    useEffect(() => {
-        const newTotal = cartItems.reduce(((acc, el) => acc + el.quantity*el.price), 0)
-        setTotal(newTotal)
-    }, [cartItems])
+    // useEffect(() => {
+    //     const newCartCount = cartItems.reduce(((acc, el) => acc + el.quantity), 0)
+    //     setCartCount(newCartCount)
+    // }, [cartItems])
+
+
+    // useEffect(() => {
+    //     const newTotal = cartItems.reduce(((acc, el) => acc + el.quantity*el.price), 0)
+    //     setTotal(newTotal)
+    // }, [cartItems])
+
+
+    const [{cartItems, cartDropDownState, cartCount, total}, dispatch] = useReducer(cartReducer, INITIAL_STATE);
+
+    const updateCartItemsReducer = (newCartItems) => {
+        const newCartCount = newCartItems.reduce(((acc, el) => acc + el.quantity), 0)
+        const newTotal = newCartItems.reduce(((acc, el) => acc + el.quantity*el.price), 0)
+        dispatch(createAction(USER_ACTION_TYPES.SET_CART_ITEMS, {cartItems: newCartItems, cartCount: newCartCount, cartTotal: newTotal}))
+    }
 
     const addItemToCart = (productToAdd) => {
-        setCartItems(addCartItem(cartItems, productToAdd))
+        // setCartItems(addCartItem(cartItems, productToAdd))
+        const newCartItems = addCartItem(cartItems, productToAdd)// for reducer
+        updateCartItemsReducer(newCartItems);
     }
 
     const decrementItem = (producToDecrement) => {
-        setCartItems(decrementCartItem(cartItems, producToDecrement))
+        // setCartItems(decrementCartItem(cartItems, producToDecrement))
+        const newCartItems = decrementCartItem(cartItems, producToDecrement)// for reducer
+        updateCartItemsReducer(newCartItems);
     }
 
     const removeItemFromCart = (producToDelete) => {
-        setCartItems(deleteItem(cartItems, producToDelete))
+        // setCartItems(deleteItem(cartItems, producToDelete))
+        const newCartItems = deleteItem(cartItems, producToDelete) // for reducer
+        updateCartItemsReducer(newCartItems);
     }
+
+
+    const setcartDropDownState = (bool) => {
+        dispatch(createAction(USER_ACTION_TYPES.SET_CART_OPEN, bool))
+    }
+    
+
+
+    
     const value = { cartDropDownState, setcartDropDownState, addItemToCart, cartItems, cartCount, decrementItem, removeItemFromCart, total }
 
 
